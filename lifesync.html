@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeSync - All-in-One Life Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-left: 4px solid #fbbf24;
+        }
+        
+        .habit-checkbox:checked + div {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-color: #10b981;
+        }
+        
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .pulse-ring {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+        }
+        
+        .hidden-section { display: none; }
+        .visible-section { display: block; animation: fadeIn 0.3s ease-in; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .debt-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .savings-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-800 flex flex-col border-r border-gray-700">
+            <div class="p-6 border-b border-gray-700">
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                    <i class="fas fa-infinity mr-2"></i>LifeSync
+                </h1>
+                <p class="text-xs text-gray-400 mt-1">Your Life, Organized</p>
+            </div>
+            
+            <nav class="flex-1 py-4">
+                <a href="#" onclick="showSection('dashboard')" class="nav-item active flex items-center px-6 py-3 hover:bg-gray-700 transition-colors" id="nav-dashboard">
+                    <i class="fas fa-home w-6"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" onclick="showSection('habits')" class="nav-item flex items-center px-6 py-3 hover:bg-gray-700 transition-colors" id="nav-habits">
+                    <i class="fas fa-check-circle w-6"></i>
+                    <span>Habits & Tasks</span>
+                </a>
+                <a href="#" onclick="showSection('budget')" class="nav-item flex items-center px-6 py-3 hover:bg-gray-700 transition-colors" id="nav-budget">
+                    <i class="fas fa-wallet w-6"></i>
+                    <span>Budget & Debt</span>
+                </a>
+                <a href="#" onclick="showSection('medicine')" class="nav-item flex items-center px-6 py-3 hover:bg-gray-700 transition-colors" id="nav-medicine">
+                    <i class="fas fa-pills w-6"></i>
+                    <span>Medicine Reminder</span>
+                </a>
+                <a href="#" onclick="showSection('journal')" class="nav-item flex items-center px-6 py-3 hover:bg-gray-700 transition-colors" id="nav-journal">
+                    <i class="fas fa-video w-6"></i>
+                    <span>Video Journal</span>
+                </a>
+            </nav>
+            
+            <div class="p-4 border-t border-gray-700">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium">User Profile</p>
+                        <p class="text-xs text-gray-400">Pro Plan</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto bg-gray-900">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="visible-section p-8">
+                <header class="mb-8">
+                    <h2 class="text-3xl font-bold mb-2">Good <span id="time-greeting">Morning</span>, User!</h2>
+                    <p class="text-gray-400" id="current-date">Loading date...</p>
+                </header>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Quick Stats -->
+                    <div class="glass-panel rounded-xl p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-gray-400 text-sm">Today's Habits</p>
+                                <h3 class="text-2xl font-bold" id="habit-progress">0/0</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                                <i class="fas fa-check-circle text-green-400"></i>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: 0%" id="habit-bar"></div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel rounded-xl p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-gray-400 text-sm">Net Worth</p>
+                                <h3 class="text-2xl font-bold" id="net-worth">$0</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                                <i class="fas fa-chart-line text-blue-400"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400" id="debt-status">No debt tracked</p>
+                    </div>
+
+                    <div class="glass-panel rounded-xl p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-gray-400 text-sm">Next Medicine</p>
+                                <h3 class="text-2xl font-bold" id="next-med">--:--</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
+                                <i class="fas fa-clock text-red-400"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400" id="med-name">No reminders</p>
+                    </div>
+
+                    <div class="glass-panel rounded-xl p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-gray-400 text-sm">Journal Entries</p>
+                                <h3 class="text-2xl font-bold" id="journal-count">0</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
+                                <i class="fas fa-video text-purple-400"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400">Total recordings</p>
+                    </div>
+                </div>
+
+                <!-- Today's Overview -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-panel rounded-xl p-6">
+                        <h3 class="text-lg font-semibold mb-4">Today's Priority Tasks</h3>
+                        <div id="dashboard-tasks" class="space-y-3">
+                            <p class="text-gray-400 text-sm">No tasks for today</p>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-panel rounded-xl p-6">
+                        <h3 class="text-lg font-semibold mb-4">Recent Journal Entry</h3>
+                        <div id="recent-journal" class="text-center py-8 text-gray-400">
+                            <i class="fas fa-video-slash text-4xl mb-2"></i>
+                            <p>No entries yet</p>
+                            <button onclick="showSection('journal')" class="mt-4 px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition">
+                                Record First Entry
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Habits & Tasks Section -->
+            <section id="habits" class="hidden-section p-8">
+                <header class="mb-6 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-3xl font-bold">Habits & Tasks</h2>
+                        <p class="text-gray-400">Build better routines</p>
+                    </div>
+                    <button onclick="openModal('habit-modal')" class="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Add Habit
+                    </button>
+                </header>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Habits List -->
+                    <div class="lg:col-span-2 space-y-4" id="habits-list">
+                        <!-- Habits will be populated here -->
+                    </div>
+
+                    <!-- Task Manager -->
+                    <div class="glass-panel rounded-xl p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-semibold">Quick Tasks</h3>
+                            <button onclick="addTask()" class="text-blue-400 hover:text-blue-300">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div class="space-y-2 mb-4" id="tasks-list">
+                            <!-- Tasks populated here -->
+                        </div>
+                        <input type="text" id="new-task" placeholder="Add new task..." 
+                               class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                               onkeypress="if(event.key==='Enter') addTask()">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Budget & Debt Section -->
+            <section id="budget" class="hidden-section p-8">
+                <header class="mb-6">
+                    <h2 class="text-3xl font-bold">Budget & Debt Manager</h2>
+                    <p class="text-gray-400">Financial freedom tracker</p>
+                </header>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <!-- Total Balance Card -->
+                    <div class="savings-card rounded-xl p-6 text-white">
+                        <h3 class="text-lg font-medium opacity-90">Total Savings</h3>
+                        <p class="text-4xl font-bold mt-2" id="total-savings">$0.00</p>
+                        <div class="mt-4 flex items-center gap-2 text-sm opacity-90">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>Track your progress</span>
+                        </div>
+                    </div>
+
+                    <!-- Debt Card -->
+                    <div class="debt-card rounded-xl p-6 text-white">
+                        <h3 class="text-lg font-medium opacity-90">Total Debt</h3>
+                        <p class="text-4xl font-bold mt-2" id="total-debt">$0.00</p>
+                        <div class="mt-4 flex items-center gap-2 text-sm opacity-90">
+                            <i class="fas fa-fire"></i>
+                            <span id="debt-free-date">Debt free by: --</span>
+                        </div>
+                    </div>
+
+                    <!-- Net Worth -->
+                    <div class="glass-panel rounded-xl p-6">
+                        <h3 class="text-lg font-medium text-gray-400">Net Worth</h3>
+                        <p class="text-4xl font-bold mt-2 text-white" id="net-worth-display">$0.00</p>
+                        <div class="mt-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-400">Debt to Income</span>
+                                <span id="debt-ratio">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div class="bg-gradient-to-r from-red-500 to-yellow-500 h-2 rounded-full" id="debt-ratio-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Debt Payoff Strategy -->
+                    <div class="glass-panel rounded-xl p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-semibold">Debt Elimination Plan</h3>
+                            <button onclick="openModal('debt-modal')" class="px-3 py-1 bg-red-600 rounded text-sm hover:bg-red-700">
+                                <i class="fas fa-plus mr-1"></i> Add Debt
+                            </button>
+                        </div>
+                        <div id="debts-list" class="space-y-3">
+                            <!-- Debts populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Monthly Budget -->
+                    <div class="glass-panel rounded-xl p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-semibold">Monthly Budget</h3>
+                            <button onclick="openModal('budget-modal')" class="px-3 py-1 bg-blue-600 rounded text-sm hover:bg-blue-700">
+                                <i class="fas fa-edit mr-1"></i> Edit
+                            </button>
+                        </div>
+                        <div class="space-y-4" id="budget-categories">
+                            <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                                        <i class="fas fa-home text-blue-400"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">Housing</p>
+                                        <p class="text-xs text-gray-400">$0 / $0</p>
+                                    </div>
+                                </div>
+                                <span class="text-sm font-bold">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Medicine Reminder Section -->
+            <section id="medicine" class="hidden-section p-8">
+                <header class="mb-6 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-3xl font-bold">Medicine Reminder</h2>
+                        <p class="text-gray-400">Never miss a dose</p>
+                    </div>
+                    <button onclick="openModal('medicine-modal')" class="px-4 py-2 bg-red-600 rounded-lg hover:bg-red-700 transition flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Add Reminder
+                    </button>
+                </header>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Today's Schedule -->
+                    <div class="glass-panel rounded-xl p-6">
+                        <h3 class="font-semibold mb-4 flex items-center gap-2">
+                            <i class="fas fa-calendar-day text-red-400"></i>
+                            Today's Schedule
+                        </h3>
+                        <div class="space-y-3" id="medicine-schedule">
+                            <!-- Medicine schedule populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Active Reminders -->
+                    <div class="glass-panel rounded-xl p-6">
+                        <h3 class="font-semibold mb-4">Active Medications</h3>
+                        <div class="space-y-3" id="medicine-list">
+                            <!-- Medicine list populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Adherence Stats -->
+                <div class="mt-6 glass-panel rounded-xl p-6">
+                    <h3 class="font-semibold mb-4">Weekly Adherence</h3>
+                    <div class="flex justify-between items-end h-32 gap-2" id="adherence-chart">
+                        <!-- Chart bars populated here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Video Journal Section -->
+            <section id="journal" class="hidden-section p-8">
+                <header class="mb-6">
+                    <h2 class="text-3xl font-bold">Video Journal</h2>
+                    <p class="text-gray-400">Record your thoughts, emotions, and daily reflections</p>
+                </header>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Recording Interface -->
+                    <div class="lg:col-span-2">
+                        <div class="video-container aspect-video bg-gray-800 rounded-xl overflow-hidden relative mb-4">
+                            <video id="preview-video" class="w-full h-full object-cover" autoplay muted playsinline></video>
+                            <div id="recording-indicator" class="absolute top-4 right-4 hidden">
+                                <div class="flex items-center gap-2 bg-red-600 px-3 py-1 rounded-full">
+                                    <div class="w-3 h-3 bg-white rounded-full pulse-ring"></div>
+                                    <span class="text-sm font-bold">REC</span>
+                                    <span id="recording-timer" class="text-sm font-mono">00:00</span>
+                                </div>
+                            </div>
+                            <div id="camera-placeholder" class="absolute inset-0 flex items-center justify-center">
+                                <div class="text-center">
+                                    <i class="fas fa-video text-6xl text-gray-600 mb-4"></i>
+                                    <p class="text-gray-400">Camera preview will appear here</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 mb-4">
+                            <button id="start-camera" onclick="startCamera()" class="flex-1 py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2">
+                                <i class="fas fa-camera"></i> Start Camera
+                            </button>
+                            <button id="start-recording" onclick="startRecording()" disabled class="flex-1 py-3 bg-red-600 rounded-lg hover:bg-red-700 transition flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
+                                <i class="fas fa-circle"></i> Record
+                            </button>
+                            <button id="stop-recording" onclick="stopRecording()" disabled class="flex-1 py-3 bg-gray-600 rounded-lg transition flex items-center justify-center gap-2 opacity-50 cursor-not-allowed hidden">
+                                <i class="fas fa-stop"></i> Stop
+                            </button>
+                        </div>
+
+                        <div class="glass-panel rounded-xl p-4">
+                            <label class="block text-sm font-medium mb-2">How are you feeling today?</label>
+                            <div class="flex gap-2 mb-3">
+                                <button onclick="setMood('happy')" class="mood-btn text-2xl hover:scale-125 transition p-2 rounded hover:bg-gray-700">😊</button>
+                                <button onclick="setMood('calm')" class="mood-btn text-2xl hover:scale-125 transition p-2 rounded hover:bg-gray-700">😌</button>
+                                <button onclick="setMood('sad')" class="mood-btn text-2xl hover:scale-125 transition p-2 rounded hover:bg-gray-700">😢</button>
+                                <button onclick="setMood('anxious')" class="mood-btn text-2xl hover:scale-125 transition p-2 rounded hover:bg-gray-700">😰</button>
+                                <button onclick="setMood('excited')" class="mood-btn text-2xl hover:scale-125 transition p-2 rounded hover:bg-gray-700">🤩</button>
+                                <button onclick="setMood('tired')" class="mood-btn text-2xl hover:scale-125 transition p-2 rounded hover:bg-gray-700">😴</button>
+                            </div>
+                            <textarea id="journal-notes" placeholder="Add notes about your day..." 
+                                      class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-sm focus:outline-none focus:border-purple-500 h-24 resize-none"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Journal Entries -->
+                    <div class="glass-panel rounded-xl p-6">
+                        <h3 class="font-semibold mb-4">Recent Entries</h3>
+                        <div class="space-y-3 max-h-96 overflow-y-auto" id="journal-entries">
+                            <!-- Journal entries populated here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add Habit Modal -->
+    <div id="habit-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-xl p-6 w-full max-w-md m-4">
+            <h3 class="text-xl font-bold mb-4">Add New Habit</h3>
+            <input type="text" id="habit-name" placeholder="Habit name (e.g., Drink 8 glasses of water)" 
+                   class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:border-green-500">
+            <div class="flex gap-2 mb-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="habit-daily" checked class="rounded bg-gray-700 border-gray-600">
+                    <span class="text-sm">Daily</span>
+                </label>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeModal('habit-modal')" class="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+                <button onclick="saveHabit()" class="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Debt Modal -->
+    <div id="debt-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-xl p-6 w-full max-w-md m-4">
+            <h3 class="text-xl font-bold mb-4">Add Debt</h3>
+            <input type="text" id="debt-name" placeholder="Debt name (e.g., Credit Card)" 
+                   class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-3 focus:outline-none focus:border-red-500">
+            <input type="number" id="debt-amount" placeholder="Total Amount" 
+                   class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-3 focus:outline-none focus:border-red-500">
+            <input type="number" id="debt-interest" placeholder="Interest Rate (%)" 
+                   class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-3 focus:outline-none focus:border-red-500">
+            <input type="number" id="debt-payment" placeholder="Monthly Payment" 
+                   class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:border-red-500">
+            <div class="flex justify-end gap-2">
+                <button onclick="closeModal('debt-modal')" class="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+                <button onclick="saveDebt()" class="px-4 py-2 bg-red-600 rounded-lg hover:bg-red-700">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Medicine Modal -->
+    <div id="medicine-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-xl p-6 w-full max-w-md m-4">
+            <h3 class="text-xl font-bold mb-4">Add Medicine Reminder</h3>
+            <input type="text" id="med-name-input" placeholder="Medicine name" 
+                   class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-3 focus:outline-none focus:border-red-500">
+            <input type="time" id="med-time" 
+                   class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-3 focus:outline-none focus:border-red-500">
+            <select id="med-frequency" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:border-red-500">
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="custom">Custom</option>
+            </select>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeModal('medicine-modal')" class="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+                <button onclick="saveMedicine()" class="px-4 py-2 bg-red-600 rounded-lg hover:bg-red-700">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Storage (In-memory for demo - would use localStorage/Backend in production)
+        let appData = {
+            habits: [
+                { id: 1, name: "Morning Meditation", completed: false, streak: 5 },
+                { id: 2, name: "Read 30 minutes", completed: false, streak: 12 },
+                { id: 3, name: "Exercise", completed: true, streak: 3 }
+            ],
+            tasks: [
+                { id: 1, text: "Review budget", completed: false },
+                { id: 2, text: "Call dentist", completed: true }
+            ],
+            debts: [
+                { id: 1, name: "Credit Card", amount: 2500, interest: 18.9, payment: 200, paid: 500 },
+                { id: 2, name: "Student Loan", amount: 15000, interest: 4.5, payment: 300, paid: 2000 }
+            ],
+            savings: 5000,
+            medicines: [
+                { id: 1, name: "Vitamin D", time: "08:00", frequency: "daily", taken: false },
+                { id: 2, name: "Blood Pressure Med", time: "20:00", frequency: "daily", taken: false }
+            ],
+            journalEntries: [],
+            currentMood: null,
+            mediaRecorder: null,
+            recordedChunks: [],
+            stream: null
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDate();
+            renderHabits();
+            renderTasks();
+            renderDebts();
+            renderMedicines();
+            updateDashboard();
+            setInterval(updateDate, 60000);
+        });
+
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('section').forEach(section => {
+                section.classList.remove('visible-section');
+                section.classList.add('hidden-section');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.remove('hidden-section');
+            document.getElementById(sectionId).classList.add('visible-section');
+            
+            // Update nav
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.getElementById(`nav-${sectionId}`).classList.add('active');
+            
+            // Refresh data
+            if (sectionId === 'dashboard') updateDashboard();
+            if (sectionId === 'budget') updateBudgetDisplay();
+        }
+
+        // Date & Time
+        function updateDate() {
+            const now = new Date();
+            const hours = now.getHours();
+            const greeting = hours < 12 ? 'Morning' : hours < 18 ? 'Afternoon' : 'Evening';
+            document.getElementById('time-greeting').textContent = greeting;
+            document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+            });
+        }
+
+        // Dashboard Updates
+        function updateDashboard() {
+            // Habits
+            const completedHabits = appData.habits.filter(h => h.completed).length;
+            const totalHabits = appData.habits.length;
+            document.getElementById('habit-progress').textContent = `${completedHabits}/${totalHabits}`;
+            document.getElementById('habit-bar').style.width = totalHabits > 0 ? `${(completedHabits/totalHabits)*100}%` : '0%';
+            
+            // Budget
+            const totalDebt = appData.debts.reduce((sum, d) => sum + (d.amount - d.paid), 0);
+            const netWorth = appData.savings - totalDebt;
+            document.getElementById('net-worth').textContent = `$${netWorth.toLocaleString()}`;
+            document.getElementById('debt-status').textContent = totalDebt > 0 ? `$${totalDebt.toLocaleString()} debt remaining` : 'Debt free!';
+            
+            // Medicine
+            const now = new Date();
+            const upcomingMeds = appData.medicines.filter(m => {
+                const medTime = new Date();
+                const [h, min] = m.time.split(':');
+                medTime.setHours(h, min);
+                return medTime > now && !m.taken;
+            }).sort((a, b) => a.time.localeCompare(b.time));
+            
+            if (upcomingMeds.length > 0) {
+                document.getElementById('next-med').textContent = upcomingMeds[0].time;
+                document.getElementById('med-name').textContent = upcomingMeds[0].name;
+            } else {
+                document.getElementById('next-med').textContent = '--:--';
+                document.getElementById('med-name').textContent = 'No upcoming';
+            }
+            
+            // Journal
+            document.getElementById('journal-count').textContent = appData.journalEntries.length;
+            
+            // Recent tasks
+            const tasksHtml = appData.tasks.slice(0, 3).map(task => `
+                <div class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg ${task.completed ? 'opacity-50' : ''}">
+                    <i class="fas ${task.completed ? 'fa-check-circle text-green-500' : 'fa-circle text-gray-600'}"></i>
+                    <span class="${task.completed ? 'line-through' : ''}">${task.text}</span>
+                </div>
+            `).join('');
+            document.getElementById('dashboard-tasks').innerHTML = tasksHtml || '<p class="text-gray-400 text-sm">No tasks</p>';
+        }
+
+        // Habits & Tasks
+        function renderHabits() {
+            const container = document.getElementById('habits-list');
+            container.innerHTML = appData.habits.map(habit => `
+                <div class="glass-panel rounded-xl p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <label class="relative cursor-pointer">
+                            <input type="checkbox" class="habit-checkbox hidden" ${habit.completed ? 'checked' : ''} 
+                                   onchange="toggleHabit(${habit.id})">
+                            <div class="w-6 h-6 rounded-full border-2 border-gray-500 flex items-center justify-center transition-all">
+                                <i class="fas fa-check text-white text-xs ${habit.completed ? 'block' : 'hidden'}"></i>
+                            </div>
+                        </label>
+                        <div>
+                            <h4 class="font-medium ${habit.completed ? 'line-through text-gray-500' : ''}">${habit.name}</h4>
+                            <p class="text-xs text-gray-400">🔥 ${habit.streak} day streak</p>
+                        </div>
+                    </div>
+                    <button onclick="deleteHabit(${habit.id})" class="text-gray-500 hover:text-red-400">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function toggleHabit(id) {
+            const habit = appData.habits.find(h => h.id === id);
+            if (habit) {
+                habit.completed = !habit.completed;
+                if (habit.completed) habit.streak++;
+                else habit.streak--;
+                renderHabits();
+                updateDashboard();
+            }
+        }
+
+        function saveHabit() {
+            const name = document.getElementById('habit-name').value;
+            if (name) {
+                appData.habits.push({
+                    id: Date.now(),
+                    name: name,
+                    completed: false,
+                    streak: 0
+                });
+                closeModal('habit-modal');
+                renderHabits();
+                updateDashboard();
+            }
+        }
+
+        function deleteHabit(id) {
+            appData.habits = appData.habits.filter(h => h.id !== id);
+            renderHabits();
+            updateDashboard();
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('tasks-list');
+            container.innerHTML = appData.tasks.map(task => `
+                <div class="flex items-center gap-2 group">
+                    <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})" 
+                           class="rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500">
+                    <span class="flex-1 text-sm ${task.completed ? 'line-through text-gray-500' : ''}">${task.text}</span>
+                    <button onclick="deleteTask(${task.id})" class="text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function addTask() {
+            const input = document.getElementById('new-task');
+            const text = input.value.trim();
+            if (text) {
+                appData.tasks.push({ id: Date.now(), text: text, completed: false });
+                input.value = '';
+                renderTasks();
+                updateDashboard();
+            }
+        }
+
+        function toggleTask(id) {
+            const task = appData.tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                renderTasks();
+                updateDashboard();
+            }
+        }
+
+        function deleteTask(id) {
+            appData.tasks = appData.tasks.filter(t => t.id !== id);
+            renderTasks();
+            updateDashboard();
+        }
+
+        // Budget & Debt
+        function updateBudgetDisplay() {
+            const totalDebt = appData.debts.reduce((sum, d) => sum + (d.amount - d.paid), 0);
+            const netWorth = appData.savings - totalDebt;
+            
+            document.getElementById('total-savings').textContent = `$${appData.savings.toLocaleString()}`;
+            document.getElementById('total-debt').textContent = `$${totalDebt.toLocaleString()}`;
+            document.getElementById('net-worth-display').textContent = `$${netWorth.toLocaleString()}`;
+            
+            // Calculate debt free date
+            if (totalDebt > 0 && appData.debts.length > 0) {
+                const totalPayment = appData.debts.reduce((sum, d) => sum + d.payment, 0);
+                const months = Math.ceil(totalDebt / totalPayment);
+                const date = new Date();
+                date.setMonth(date.getMonth() + months);
+                document.getElementById('debt-free-date').textContent = `Debt free by: ${date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`;
+            } else {
+                document.getElementById('debt-free-date').textContent = 'You are debt free!';
+            }
+            
+            // Debt ratio
+            const monthlyIncome = 5000; // Example
+            const ratio = Math.min((totalPayment / monthlyIncome) * 100, 100);
+            document.getElementById('debt-ratio').textContent = `${ratio.toFixed(1)}%`;
+            document.getElementById('debt-ratio-bar').style.width = `${ratio}%`;
+        }
+
+        function renderDebts() {
+            const container = document.getElementById('debts-list');
+            container.innerHTML = appData.debts.map(debt => {
+                const remaining = debt.amount - debt.paid;
+                const progress = (debt.paid / debt.amount) * 100;
+                return `
+                    <div class="bg-gray-800 rounded-lg p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 class="font-medium">${debt.name}</h4>
+                                <p class="text-xs text-gray-400">${debt.interest}% APR</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-red-400">$${remaining.toLocaleString()}</p>
+                                <p class="text-xs text-gray-500">of $${debt.amount.toLocaleString()}</p>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2 mb-2">
+                            <div class="bg-gradient-to-r from-red-500 to-pink-500 h-2 rounded-full" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-400">
+                            <span>${progress.toFixed(1)}% paid</span>
+                            <span>$${debt.payment}/mo</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            updateBudgetDisplay();
+        }
+
+        function saveDebt() {
+            const name = document.getElementById('debt-name').value;
+            const amount = parseFloat(document.getElementById('debt-amount').value);
+            const interest = parseFloat(document.getElementById('debt-interest').value);
+            const payment = parseFloat(document.getElementById('debt-payment').value);
+            
+            if (name && amount) {
+                appData.debts.push({
+                    id: Date.now(),
+                    name, amount, interest, payment, paid: 0
+                });
+                closeModal('debt-modal');
+                renderDebts();
+                updateDashboard();
+            }
+        }
+
+        // Medicine
+        function renderMedicines() {
+            const scheduleContainer = document.getElementById('medicine-schedule');
+            const listContainer = document.getElementById('medicine-list');
+            
+            const now = new Date();
+            const currentTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            
+            // Sort by time
+            const sortedMeds = [...appData.medicines].sort((a, b) => a.time.localeCompare(b.time));
+            
+            scheduleContainer.innerHTML = sortedMeds.map(med => {
+                const isPast = med.time < currentTime;
+                const statusClass = med.taken ? 'bg-green-500/20 border-green-500' : isPast ? 'bg-red-500/20 border-red-500' : 'bg-gray-800 border-gray-700';
+                return `
+                    <div class="flex items-center justify-between p-3 rounded-lg border ${statusClass}">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full ${med.taken ? 'bg-green-500' : 'bg-gray-700'} flex items-center justify-center">
+                                <i class="fas ${med.taken ? 'fa-check text-white' : 'fa-pills text-gray-400'}"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">${med.name}</p>
+                                <p class="text-xs text-gray-400">${med.time} • ${med.frequency}</p>
+                            </div>
+                        </div>
+                        <button onclick="toggleMedicine(${med.id})" class="px-3 py-1 ${med.taken ? 'bg-gray-700' : 'bg-green-600'} rounded text-sm">
+                            ${med.taken ? 'Undo' : 'Take'}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+            
+            listContainer.innerHTML = sortedMeds.map(med => `
+                <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-pills text-red-400"></i>
+                        <span>${med.name}</span>
+                    </div>
+                    <span class="text-sm text-gray-400">${med.time}</span>
+                </div>
+            `).join('');
+            
+            updateDashboard();
+        }
+
+        function toggleMedicine(id) {
+            const med = appData.medicines.find(m => m.id === id);
+            if (med) {
+                med.taken = !med.taken;
+                renderMedicines();
+            }
+        }
+
+        function saveMedicine() {
+            const name = document.getElementById('med-name-input').value;
+            const time = document.getElementById('med-time').value;
+            const frequency = document.getElementById('med-frequency').value;
+            
+            if (name && time) {
+                appData.medicines.push({
+                    id: Date.now(),
+                    name, time, frequency, taken: false
+                });
+                closeModal('medicine-modal');
+                renderMedicines();
+            }
+        }
+
+        // Video Journal
+        let recordingInterval;
+        let seconds = 0;
+
+        async function startCamera() {
+            try {
+                appData.stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                const video = document.getElementById('preview-video');
+                video.srcObject = appData.stream;
+                document.getElementById('camera-placeholder').classList.add('hidden');
+                document.getElementById('start-camera').classList.add('hidden');
+                
+                const recordBtn = document.getElementById('start-recording');
+                recordBtn.disabled = false;
+                recordBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } catch (err) {
+                alert('Could not access camera. Please ensure you have given permission.');
+            }
+        }
+
+        function startRecording() {
+            if (!appData.stream) return;
+            
+            appData.recordedChunks = [];
+            appData.mediaRecorder = new MediaRecorder(appData.stream);
+            
+            appData.mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) appData.recordedChunks.push(e.data);
+            };
+            
+            appData.mediaRecorder.onstop = saveRecording;
+            
+            appData.mediaRecorder.start();
+            
+            // UI Updates
+            document.getElementById('recording-indicator').classList.remove('hidden');
+            document.getElementById('start-recording').classList.add('hidden');
+            const stopBtn = document.getElementById('stop-recording');
+            stopBtn.classList.remove('hidden', 'opacity-50', 'cursor-not-allowed');
+            stopBtn.disabled = false;
+            
+            // Timer
+            seconds = 0;
+            recordingInterval = setInterval(() => {
+                seconds++;
+                const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
+                const secs = String(seconds % 60).padStart(2, '0');
+                document.getElementById('recording-timer').textContent = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function stopRecording() {
+            if (appData.mediaRecorder && appData.mediaRecorder.state !== 'inactive') {
+                appData.mediaRecorder.stop();
+                clearInterval(recordingInterval);
+                
+                document.getElementById('recording-indicator').classList.add('hidden');
+                document.getElementById('stop-recording').classList.add('hidden');
+                document.getElementById('start-recording').classList.remove('hidden');
+            }
+        }
+
+        function saveRecording() {
+            const blob = new Blob(appData.recordedChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const timestamp = new Date();
+            
+            const entry = {
+                id: Date.now(),
+                url: url,
+                date: timestamp,
+                mood: appData.currentMood,
+                notes: document.getElementById('journal-notes').value,
+                blob: blob // In real app, upload to Google Drive here
+            };
+            
+            appData.journalEntries.unshift(entry);
+            renderJournalEntries();
+            
+            // Reset
+            document.getElementById('journal-notes').value = '';
+            appData.currentMood = null;
+            document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('bg-gray-700'));
+            
+            // Show success message
+            alert('Journal entry saved! In production, this would upload to Google Drive.');
+        }
+
+        function renderJournalEntries() {
+            const container = document.getElementById('journal-entries');
+            container.innerHTML = appData.journalEntries.map(entry => `
+                <div class="bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-700 transition" onclick="playEntry(${entry.id})">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-play text-gray-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-sm">${entry.date.toLocaleDateString()} ${entry.date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                            <p class="text-xs text-gray-400">${entry.mood ? entry.mood + ' ' : ''}${entry.notes ? '• ' + entry.notes.substring(0, 30) + '...' : ''}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            updateDashboard();
+        }
+
+        function playEntry(id) {
+            const entry = appData.journalEntries.find(e => e.id === id);
+            if (entry) {
+                const video = document.getElementById('preview-video');
+                video.srcObject = null;
+                video.src = entry.url;
+                video.play();
+                document.getElementById('camera-placeholder').classList.add('hidden');
+            }
+        }
+
+        function setMood(mood) {
+            appData.currentMood = mood;
+            document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('bg-gray-700'));
+            event.target.classList.add('bg-gray-700');
+        }
+
+        // Modal Helpers
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+            document.getElementById(modalId).classList.add('flex');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            document.getElementById(modalId).classList.remove('flex');
+            // Clear inputs
+            document.querySelectorAll(`#${modalId} input`).forEach(input => input.value = '');
+        }
+
+        // Close modals on outside click
+        window.onclick = function(event) {
+            if (event.target.classList.contains('fixed')) {
+                event.target.classList.add('hidden');
+                event.target.classList.remove('flex');
+            }
+        }
+    </script>
+</body>
+</html>
